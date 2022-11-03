@@ -13,6 +13,7 @@ repository = "https://github.com/substrate-developer-hub/substrate-node-template
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+log = "0.4"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
 	"derive",
 ] }
@@ -20,11 +21,14 @@ scale-info = { version = "2.1.1", default-features = false, features = ["derive"
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
 frame-support = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
 frame-system = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-core = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-std = { version = "4.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+sp-io = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
+hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+libsecp256k1 = { version = "0.7", default-features = false, features = ["static-context"] }
 
 [dev-dependencies]
-sp-core = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
-sp-io = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
-sp-runtime = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
 
 [features]
 default = ["std"]
@@ -34,6 +38,13 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"scale-info/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-io/std",
+	"sp-std/std",
+	"log/std",
+	"hex/std",
+	"libsecp256k1/std"
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

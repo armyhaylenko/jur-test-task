@@ -8,7 +8,7 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 
 benchmarks! {
-	do_something {
+	create_claim {
 		let s in 0 .. 100;
 		let caller: T::AccountId = whitelisted_caller();
 	}: _(RawOrigin::Signed(caller), s)

@@ -270,8 +270,15 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
+parameter_types! {
+	pub const MessageToSign: [u8; 16] = *b"pleasegivemoney!";
+}
+
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
+	type MessageToSign = MessageToSign;
+	type Signature = sp_core::ecdsa::Signature;
+	type VCTPublicKey = sp_core::ecdsa::Public;
 	type RuntimeEvent = RuntimeEvent;
 }
 
