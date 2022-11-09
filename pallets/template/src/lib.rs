@@ -1,16 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
-
+// TODO: add mock runtime
 #[cfg(test)]
 mod mock;
 
+// TODO: add tests
 #[cfg(test)]
 mod tests;
 
+// TODO: update benchmarks
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
@@ -27,7 +26,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub (super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// A static message that has to be signed in Ethereum context
@@ -102,7 +100,8 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create claim to sync VeChainThor balances to this chain.
-		/// This will check for locked balances in the target contract
+		/// This will schedule some work that will be done by an offchain worker to
+		/// check for locked balances in the target contract
 		/// and sync them to a storage item in this pallet.
 		///
 		/// Example compressed public that has JUR tokens on balance:
@@ -176,7 +175,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::<T>::BalanceDataStored {
 				chain_account,
-				thor_account: thor_account.clone(),
+				thor_account,
 				balance,
 			});
 
@@ -202,11 +201,8 @@ pub mod pallet {
 				primitives::shared::Call::<T::BlockNumber, T::AccountId>::decode(&mut &payload[..])
 					.map_err(|_| ())?;
 			let call = match external_call {
-				primitives::shared::Call::SubmitBalancesData { .. } => Call::submit_user_balance {
-					payload,
-					signature: signature.into(),
-					public: public.into(),
-				},
+				primitives::shared::Call::SubmitBalancesData { .. } =>
+					Call::submit_user_balance { payload, signature, public },
 			};
 			let result =
 				SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.clone().into());
@@ -240,12 +236,12 @@ pub mod pallet {
 							.map_err(|_| InvalidTransaction::Call)?;
 					let primitives::shared::Call::SubmitBalancesData { chain_account, .. } =
 						decoded_call;
-					if signature.verify(&payload[..], &public) {
+					if signature.verify(&payload[..], public) {
 						ValidTransaction::with_tag_prefix("Template")
 							.priority(TransactionPriority::MAX)
 							// The transaction is only valid for next 5 blocks. After that it's
 							// going to be revalidated by the pool.
-							.longevity(5 as u64)
+							.longevity(5u64)
 							.propagate(true)
 							// dedup by chain account to reject potential modifications by other
 							// offchain workers
