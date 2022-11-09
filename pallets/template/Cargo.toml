@@ -27,6 +27,7 @@ sp-std = { version = "4.0.0", default-features = false, git = "https://github.co
 sp-io = { version = "6.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.30" }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 libsecp256k1 = { version = "0.7", default-features = false, features = ["static-context"] }
+primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
 
@@ -44,7 +45,8 @@ std = [
 	"sp-std/std",
 	"log/std",
 	"hex/std",
-	"libsecp256k1/std"
+	"libsecp256k1/std",
+	"primitives/std"
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

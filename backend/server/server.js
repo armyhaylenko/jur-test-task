@@ -14,9 +14,11 @@ app.get('/balance', async (req, res) => {
     const contractAbi = require("../abi.json");
     const contract = new web3.eth.Contract(contractAbi, "0x46209D5e5a49C1D403F4Ee3a0A88c3a27E29e58D");
     const accountBalance = await contract.methods.balanceOf(account).call();
-    const formatted = web3.utils.fromWei(accountBalance, "ether");
+    const balanceAsBn = web3.utils.toBN(accountBalance);
+    const adjustedBalance = web3.utils.fromWei(balanceAsBn, "microether").slice(0, -2)
+    console.log("Balance: " + adjustedBalance);
 
-    return res.status(200).send(formatted);
+    return res.status(200).send(adjustedBalance);
 })
 
 module.exports = {

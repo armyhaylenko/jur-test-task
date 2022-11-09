@@ -3,6 +3,8 @@ members = [
     "node",
     "pallets/template",
     "runtime",
+    "offchain-worker",
+    "primitives"
 ]
 [profile.release]
 panic = "unwind"
