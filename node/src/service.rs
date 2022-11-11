@@ -1,7 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use node_template_runtime::{self, opaque::Block, RuntimeApi};
-use sc_client_api::BlockBackend;
+use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_finality_grandpa::SharedVoterState;
@@ -10,6 +10,7 @@ use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
+use tokio::sync::Mutex;
 
 // Our native executor instance.
 pub struct ExecutorDispatch;
@@ -236,7 +237,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
 		rpc_builder: rpc_extensions_builder,
-		backend,
+		backend: backend.clone(),
 		system_rpc_tx,
 		tx_handler_controller,
 		config,
@@ -257,7 +258,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(
 			StartAuraParams {
 				slot_duration,
-				client,
+				client: client.clone(),
 				select_chain,
 				block_import,
 				proposer_factory,
@@ -333,6 +334,21 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
 		);
 	}
 
+	let offchain_db = backend
+		.offchain_storage()
+		.ok_or(ServiceError::Other(String::from("Offchain storage unavailable")))?;
+	let keystore = keystore_container.local_keystore().ok_or(sc_keystore::Error::Unavailable)?;
+
+	// Clone per thread where we plan on continually sharing read/writes
+	let shared_db = Arc::new(Mutex::new(offchain_db.clone()));
+
+	let offchain_plugin_task =
+		offchain_plugin::start(client.clone(), shared_db.clone(), keystore.clone());
+
+	let group_name = "plugin";
+	task_manager
+		.spawn_handle()
+		.spawn("tx_submission", group_name, offchain_plugin_task);
 	network_starter.start_network();
 	Ok(task_manager)
 }

@@ -11,7 +11,7 @@ use pallet_grandpa::{
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -270,9 +270,24 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
+parameter_types! {
+	pub const MessageToSign: [u8; 16] = *b"pleasegivemoney!";
+}
+
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
+	type MessageToSign = MessageToSign;
+	type Signature = sp_core::ecdsa::Signature;
+	type VCTPublicKey = sp_core::ecdsa::Public;
 	type RuntimeEvent = RuntimeEvent;
+}
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
+where
+	RuntimeCall: From<C>,
+{
+	type Extrinsic = UncheckedExtrinsic;
+	type OverarchingCall = RuntimeCall;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -344,6 +359,21 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	impl primitives::runtime_api::BalancesOffchainWorkerApi<Block> for Runtime {
+		fn submit_balance(
+				call: Vec<u8>,
+				signature: primitives::shared::Signature,
+				public: primitives::shared::Public,
+			) -> Result<(), ()> {
+			TemplateModule::create_extrinsic_from_external_call(call, public, signature)
+		}
+	}
+
+	impl primitives::runtime_api::WorkloadQueryApi<Block> for Runtime {
+		fn get_workload() -> Vec<(AccountId, H160)> {
+			pallet_template::Workload::<Runtime>::iter().collect::<Vec<(AccountId, H160)>>()
+		}
+	}
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION
